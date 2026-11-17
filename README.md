@@ -25,3 +25,13 @@ curl -sS -X POST http://127.0.0.1:8010/v1/transactions \
 ```
 
 The response counts the rows, lists the flagged ones, and says whether the webhook accepted the alert.
+
+## Pipeline
+
+A push to `main` runs `.github/workflows/pipeline.yml`.
+
+1. The test job installs dependencies, runs the tests, and typechecks.
+2. The build job creates the container image from that commit. The image includes `config/prompt.md` and `config/agent.json`.
+3. The deploy job starts the new image. It runs only on a push to `main`.
+
+`GET /health` returns `prompt_revision`, a hash of `config/prompt.md`. Edit that file, push, and the running agent serves the new hash only after the image is rebuilt and the containers are replaced. On this machine the same three steps are `./scripts/pipeline.sh`.

@@ -101,6 +101,20 @@ test("api returns a summary", async () => {
   await app.close();
 });
 
+test("health reports the prompt revision", async () => {
+  delete process.env.BEDROCK_MODEL_ID;
+  const app = createApp(async () => {
+    throw new Error("should not review");
+  });
+  const response = await app.inject({ method: "GET", url: "/health" });
+  assert.equal(response.statusCode, 200);
+  const body = response.json() as { status: string; prompt_revision: string; model_id: string };
+  assert.equal(body.status, "ok");
+  assert.equal(body.model_id, "amazon.nova-micro-v1:0");
+  assert.match(body.prompt_revision, /^[a-f0-9]{12}$/);
+  await app.close();
+});
+
 test("api rejects an empty batch", async () => {
   const app = createApp(async () => {
     throw new Error("should not review");

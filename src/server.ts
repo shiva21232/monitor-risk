@@ -4,6 +4,7 @@ import { pathToFileURL } from "node:url";
 import Fastify, { type FastifyInstance } from "fastify";
 
 import { review, ReviewError } from "./agent.js";
+import { loadConfig } from "./config.js";
 import { transactionBatchSchema, type Summary, type Transaction } from "./schemas.js";
 
 export type Reviewer = (transactions: Transaction[]) => Promise<Summary>;
@@ -24,7 +25,10 @@ export function createApp(reviewTransactions: Reviewer = review): FastifyInstanc
   const app = Fastify({ logger: false });
   const recent = new Map<string, Summary>();
 
-  app.get("/health", async () => ({ status: "ok" }));
+  app.get("/health", async () => {
+    const config = loadConfig();
+    return { status: "ok", model_id: config.modelId, prompt_revision: config.promptRevision };
+  });
 
   app.post("/v1/transactions", async (request, reply) => {
     const parsed = transactionBatchSchema.safeParse(request.body);
